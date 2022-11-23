@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Base.Theme.Test2" parent="Theme.Material3.Light.NoActionBar">
+        <item name="fontFamily">@font/mark_pro</item>
+    </style>
+
+    <style name="Theme.Test2" parent="Base.Theme.Test2">
+        <item name="fontFamily">@font/mark_pro</item>
+    </style>
+
+    <style name="RatingBar" parent="Widget.AppCompat.RatingBar.Small">
+    </style>
+</resources>

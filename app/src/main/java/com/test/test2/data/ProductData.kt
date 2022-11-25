@@ -12,4 +12,16 @@ data class ProductData(
     @SerializedName("is_favorites") val isFav: Boolean,
     @SerializedName("price_without_discount") val price: Long,
     @SerializedName("discount_price") val oldPrice: Long
-)
+) {
+    constructor(id: Long, title: String, price: Long, oldPrice: Long) : this(
+        id,
+        false,
+        title,
+        "",
+        "https://avatars.mds.yandex.net/get-mpic/5251502/img_id6904501887217302707.jpeg/orig",
+        false,
+        false,
+        price,
+        oldPrice
+    )
+}

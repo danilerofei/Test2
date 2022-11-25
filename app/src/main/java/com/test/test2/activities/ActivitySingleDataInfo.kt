@@ -2,15 +2,19 @@ package com.test.test2.activities
 
 import android.content.Intent
 import android.view.View
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.test.test2.R
 import com.test.test2.adapters.AdapterCapacity
 import com.test.test2.adapters.AdapterColors
 import com.test.test2.adapters.AdapterDeviceImages
+import com.test.test2.dagger.BaseApp
 import com.test.test2.dagger.BindingActivity
+import com.test.test2.data.BasketData
 import com.test.test2.data.CapacityCheck
 import com.test.test2.data.ColorCheck
+import com.test.test2.data.SingleProductInfo
 import com.test.test2.databinding.ActivitySingleInfoBinding
 import com.test.test2.interfaces.IClickListener
 import com.test.test2.models.ApiModel
@@ -75,9 +79,12 @@ class ActivitySingleDataInfo : BindingActivity<ActivitySingleInfoBinding>() {
         }
     }
 
+    private var productData: SingleProductInfo? = null
+
     override fun onCreate() {
         apiModel.loadProductInfo()
         apiModel.productData.observe(this) { p ->
+            productData = p
             binding.tvTitle.text = p.title
             binding.ratingBar.rating = p.rating
             binding.tvCamera.text = p.camera
@@ -98,8 +105,6 @@ class ActivitySingleDataInfo : BindingActivity<ActivitySingleInfoBinding>() {
                 capacityItems.add(item)
             }
             capacityAdapter.updateItems(capacityItems)
-
-            binding
 
             binding.pageContainer.adapter = AdapterDeviceImages(this, p.images)
 
@@ -137,6 +142,24 @@ class ActivitySingleDataInfo : BindingActivity<ActivitySingleInfoBinding>() {
         binding.fabCart.setOnClickListener {
             val intent = Intent(this, ActivityCart::class.java)
             startActivity(intent)
+        }
+
+        binding.btnAddToCart.setOnClickListener {
+            if (productData != null) {
+                val basket = BasketData.fromProductData(productData!!)
+                val oldData = (application as BaseApp).baskets.find {
+                    it.id == basket.id
+                }
+                if (oldData == null) {
+                    (application as BaseApp).baskets.add(basket)
+                } else {
+                    val pos = (application as BaseApp).baskets.indexOf(oldData)
+                    (application as BaseApp).baskets[pos] = oldData.apply {
+                        count += 1
+                    }
+                }
+                Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
@@ -16,15 +17,17 @@ import com.test.test2.adapters.CategoryAdapter
 import com.test.test2.adapters.HotSalesAdapter
 import com.test.test2.dagger.BaseFragment
 import com.test.test2.data.CategoryData
+import com.test.test2.data.ProductData
 import com.test.test2.databinding.FragmentHomeBinding
 import com.test.test2.dialogs.DialogFilter
 import com.test.test2.interfaces.IClickListener
+
 
 class FragmentHome : BaseFragment<FragmentHomeBinding, ActivityMain>() {
 
     override fun getViewBinding(
         inflater: LayoutInflater,
-        container: ViewGroup?
+        container: ViewGroup?,
     ): FragmentHomeBinding {
         return FragmentHomeBinding.inflate(inflater, container, false)
     }
@@ -60,6 +63,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, ActivityMain>() {
     }
 
     private var currentCategoryPosition: Int = 0
+    private var bestSellerItems = mutableListOf<ProductData>()
 
     private fun onChangeSelection(newPosition: Int) {
         if (currentCategoryPosition == newPosition) {
@@ -85,6 +89,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, ActivityMain>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        bestSellerItems.clear()
 
         binding.rvCategory.adapter = categoryAdapter
         binding.rvCategory.layoutManager = LinearLayoutManager(
@@ -97,12 +102,22 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, ActivityMain>() {
         binding.vpHotSales.orientation = ViewPager2.ORIENTATION_HORIZONTAL
 
         binding.rvBestSeller.adapter = bestSellerAdapter
-        binding.rvBestSeller.layoutManager = GridLayoutManager(requireContext(), 2)
+        val bestSellerManager = GridLayoutManager(requireContext(), 2)
+        binding.rvBestSeller.layoutManager = bestSellerManager
+        binding.rvBestSeller.isNestedScrollingEnabled = false
+        binding.scrollHome.setOnScrollChangeListener { v: NestedScrollView, _: Int, scrollY: Int, _: Int, oldScrollY: Int ->
+            if (v.getChildAt(v.childCount - 1) != null) {
+                if (scrollY >= v.getChildAt(v.childCount - 1).measuredHeight - v.measuredHeight && scrollY > oldScrollY) {
+                    loadMore()
+                }
+            }
+        }
 
         parentActivity.apiModel.mainData.observe(viewLifecycleOwner) {
             if (it != null) {
                 hotSalesAdapter.updateItems(it.homeStore)
-                bestSellerAdapter.updateItems(it.bestSeller)
+                bestSellerItems.addAll(it.bestSeller)
+                bestSellerAdapter.updateItems(bestSellerItems)
             }
         }
 
@@ -110,5 +125,12 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, ActivityMain>() {
             val dialog = DialogFilter()
             dialog.show(parentActivity.supportFragmentManager, dialog.tag)
         }
+    }
+
+    private fun loadMore() {
+        val newItems = mutableListOf<ProductData>()
+        newItems.addAll(bestSellerAdapter.items)
+        newItems.addAll(bestSellerItems.shuffled())
+        bestSellerAdapter.updateItems(newItems)
     }
 }
